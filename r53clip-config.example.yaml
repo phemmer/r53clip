@@ -1,0 +1,11 @@
+---
+records:
+  service1:
+    zone: example.com
+    source: EIP
+    ttl: 30
+  service2:
+    zone: example.com
+    source: eth0
+    ttl: 30
+    stopped: 0.0.0.0

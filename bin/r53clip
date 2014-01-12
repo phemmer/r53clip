@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+
+=begin
+class Class
+	alias_method :new_stackdepth, :new
+	def new(*args)
+		i = new_stackdepth(*args)
+		i.class.instance_methods(false).each do |method|
+			#next if method.to_s.match(/_stackdepth$/)
+			#old_method = i.class.send(:instance_method, method)
+			#i.class.send(:alias_method, "#{method}_stackdepth".to_sym, method)
+			puts "DEFINE_MEHTOD: #{method}"
+			i.send(:define_singleton_method, method) do |*args|
+				puts "METHOD CALLED: #{method} #{args.inspect}"
+				stack = caller
+				if stack.size > 100 then
+					puts "Stack size == #{stack.size}"
+					puts stack.join("\n")
+					exit 1
+				end
+				#i.send("#{method}_stackdepth".to_sym, *args)
+				#old_method.bind(i).(*args)
+				super(*args)
+			end
+		end
+		i
+	end
+end
+=end
+
+require 'rubygems'
+require 'bundler/setup'
+
+if RUBY_ENGINE == 'ruby' and ENV['RUBY_THREAD_MACHINE_STACK_SIZE'].to_i < 1572864 then
+	ENV['RUBY_THREAD_MACHINE_STACK_SIZE'] = '1572864'
+	exec('ruby', $0, *ARGV)
+end
+
+$:.unshift(File.expand_path('../../lib', File.realpath(__FILE__)))
+
+command = ARGV[0].to_sym
+
+config_path = ARGV[1]
+
+abort "Invalid config file" if !config_path or !File.exists?(config_path)
+
+require 'r53clip'
+
+if command == :start then
+	Signal.trap('INT') { exit(0) }
+	Signal.trap('TERM') { exit(0) }
+	begin
+		r53 = R53clip.new(config_path)
+		r53.start
+		r53.cc.dispatch_thread.join
+	ensure
+		r53.stop(true)
+	end
+elsif command == :status
+	healthy = true
+	data = R53clip.new(config_path).status
+	data.each do |record_name, record_ips|
+		puts ""
+		puts "#{record_name}:"
+		puts "  Local IP: #{record_ips[0]}"
+		puts "  Active IPs: #{record_ips[1].join(' ')}"
+		healthy = false if !record_ips[1].include?(record_ips[0])
+	end
+	exit 0 if healthy
+	exit 1
+else
+	raise ArgumentError, "Unknown command #{command}"
+end
