@@ -4,6 +4,7 @@ class R53clip
 	require 'ipaddr'
 	require 'aws-sdk'
 	require 'net/http'
+	require 'uri'
 
 	attr_reader :cc
 
@@ -78,7 +79,7 @@ class R53clip
 			records << record
 			record['name'] = record_name
 			record['name'] += '.' unless record['name'][-1] == '.'
-			record['zone'] = record_spec['zone'] if record_spec['zone']
+			record['zone'] = record_spec['zone'] || record['name'].sub(/^[^.]+\./, '')
 			record['zone'] += '.' unless record['zone'][-1] == '.'
 			record['ttl'] = record_spec['ttl'] if record_spec['ttl']
 			record['stopped'] = record_spec['stopped'] if record_spec['stopped']
