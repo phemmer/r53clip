@@ -15,4 +15,6 @@ exec <%= app_dir %>/bin/foreman run -d <%= app_dir %> -- r53clip start <%= confi
 
 respawn
 
+kill timeout 180
+
 # vim: set ft=upstart ts=2 sw=2 tw=0 :
