@@ -13,12 +13,6 @@ chdir <%= run_dir %>
 
 exec <%= app_dir %>/bin/foreman run -d <%= app_dir %> -- r53clip start <%= config_path %>
 
-post-start script
-	timeout 15 sh <<'EOI'
-		while ! <%= app_dir %>/bin/r53clip status <%= config_path %>; do sleep 1; done
-EOI
-end script
-
 respawn
 
 # vim: set ft=upstart ts=2 sw=2 tw=0 :
