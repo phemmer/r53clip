@@ -185,7 +185,7 @@ class R53clip
 
 				batch << rrset.new_delete_request if rrset.exists?
 
-				batch << AWS::Route53::CreateRequest.new(zone_record_name, 'A', :ttl => zone_record_data['ttl'] || 30, :resource_records => values.map{|v| {:value => v}}) if values.size > 0
+				batch << AWS::Route53::CreateRequest.new(zone_record_name, 'A', :ttl => (zone_record_data['ttl'] || 30).to_i, :resource_records => values.map{|v| {:value => v}}) if values.size > 0
 
 				puts "SYNC: Setting #{zone_record_name} #{values.inspect}"
 			end
