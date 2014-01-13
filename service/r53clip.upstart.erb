@@ -1,0 +1,24 @@
+description "Route53 cluster IP manager"
+
+start on <%= depend_service %>
+stop on stopping <%= depend_service %>
+
+env RUBY_THREAD_MACHINE_STACK_SIZE=1572864
+
+pre-start script
+	mkdir -p '<%= run_dir %>'
+end script
+
+chdir <%= run_dir %>
+
+exec <%= app_dir %>/bin/foreman run -- r53clip start <%= config_path %>
+
+post-start script
+	timeout 15 sh <<'EOI'
+		while ! <%= app_dir %>/bin/r53clip status <%= config_path %>; do sleep 1; done
+EOI
+end script
+
+respawn
+
+# vim: set ft=upstart ts=2 sw=2 tw=0 :
