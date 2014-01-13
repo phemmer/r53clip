@@ -11,7 +11,7 @@ end script
 
 chdir <%= run_dir %>
 
-exec <%= app_dir %>/bin/foreman run -- r53clip start <%= config_path %>
+exec <%= app_dir %>/bin/foreman run -d <%= app_dir %> -- r53clip start <%= config_path %>
 
 post-start script
 	timeout 15 sh <<'EOI'
