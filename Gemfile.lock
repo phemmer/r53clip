@@ -13,6 +13,12 @@ GIT
       ffi (~> 1.9)
 
 GIT
+  remote: git@github.com:phemmer/ruby-syslogio.git
+  revision: 66a0ff775e9378460f734fd5f4518fc13417d73d
+  specs:
+    syslogio (0.0.1)
+
+GIT
   remote: git@github.com:pub-burrito/foreman.git
   revision: bf2db433aa700d2d1ac931e65ee83743163920d0
   branch: cloudcom
@@ -48,3 +54,4 @@ DEPENDENCIES
   foreman!
   json
   rake
+  syslogio!

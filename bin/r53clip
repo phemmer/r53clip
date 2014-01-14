@@ -8,6 +8,9 @@ if RUBY_ENGINE == 'ruby' and ENV['RUBY_THREAD_MACHINE_STACK_SIZE'].to_i < 157286
 	exec('ruby', $0, *ARGV)
 end
 
+$stdout = SyslogIO.new(:daemon, :info, $stdout) unless $stdout.isatty
+$stderr = SyslogIO.new(:daemon, :err, $stderr) unless $stderr.isatty
+
 $:.unshift(File.expand_path('../../lib', File.realpath(__FILE__)))
 
 command = ARGV[0].to_sym
