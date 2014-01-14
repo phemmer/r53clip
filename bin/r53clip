@@ -1,33 +1,5 @@
 #!/usr/bin/env ruby
 
-=begin
-class Class
-	alias_method :new_stackdepth, :new
-	def new(*args)
-		i = new_stackdepth(*args)
-		i.class.instance_methods(false).each do |method|
-			#next if method.to_s.match(/_stackdepth$/)
-			#old_method = i.class.send(:instance_method, method)
-			#i.class.send(:alias_method, "#{method}_stackdepth".to_sym, method)
-			puts "DEFINE_MEHTOD: #{method}"
-			i.send(:define_singleton_method, method) do |*args|
-				puts "METHOD CALLED: #{method} #{args.inspect}"
-				stack = caller
-				if stack.size > 100 then
-					puts "Stack size == #{stack.size}"
-					puts stack.join("\n")
-					exit 1
-				end
-				#i.send("#{method}_stackdepth".to_sym, *args)
-				#old_method.bind(i).(*args)
-				super(*args)
-			end
-		end
-		i
-	end
-end
-=end
-
 require 'rubygems'
 require 'bundler/setup'
 
@@ -41,6 +13,8 @@ $:.unshift(File.expand_path('../../lib', File.realpath(__FILE__)))
 command = ARGV[0].to_sym
 
 config_path = ARGV[1]
+config_path = '/etc/r53clip.yaml' if !config_path and File.exists?('/etc/r53clip')
+config_path = File.expand_path('../../r53clip.yaml', __FILE__) if !config_path and File.exists?(File.expand_path('../../r53clip.yaml', __FILE__))
 
 abort "Invalid config file" if !config_path or !File.exists?(config_path)
 
