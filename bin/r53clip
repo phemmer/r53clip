@@ -1,12 +1,16 @@
 #!/usr/bin/env ruby
 
-require 'rubygems'
-require 'bundler/setup'
-
 if RUBY_ENGINE == 'ruby' and ENV['RUBY_THREAD_MACHINE_STACK_SIZE'].to_i < 1572864 then
 	ENV['RUBY_THREAD_MACHINE_STACK_SIZE'] = '1572864'
 	exec('ruby', $0, *ARGV)
 end
+
+Dir.chdir(File.expand_path('../../', File.realpath(__FILE__)))
+
+require 'rubygems'
+require 'bundler/setup'
+
+require 'syslogio'
 
 $stdout = SyslogIO.new(:daemon, :info, $stdout) unless $stdout.isatty
 $stderr = SyslogIO.new(:daemon, :err, $stderr) unless $stderr.isatty
@@ -19,15 +23,15 @@ config_path = ARGV[1]
 config_path = '/etc/r53clip.yaml' if !config_path and File.exists?('/etc/r53clip')
 config_path = File.expand_path('../../r53clip.yaml', __FILE__) if !config_path and File.exists?(File.expand_path('../../r53clip.yaml', __FILE__))
 
-abort "Invalid config file" if !config_path or !File.exists?(config_path)
+abort "Invalid config file path #{config_path.inspect}" if !config_path or !File.exists?(config_path)
 
 require 'r53clip'
 
 if command == :start then
 	Signal.trap('INT') { exit(0) }
 	Signal.trap('TERM') { exit(0) }
+	r53 = R53clip.new(config_path)
 	begin
-		r53 = R53clip.new(config_path)
 		r53.start
 		r53.cc.dispatch_thread.join
 	ensure

@@ -1,6 +1,10 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'rake'
+require 'rspec/core/rake_task'
+
+desc "Run all specs"
+RSpec::Core::RakeTask.new(:spec)
 
 desc "Generate upstart service file"
 task "upstart" do

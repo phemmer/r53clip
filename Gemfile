@@ -8,4 +8,6 @@ gem 'syslogio', :git => 'git@github.com:phemmer/ruby-syslogio.git'
 gem 'rake'
 gem 'foreman', :git => 'git@github.com:pub-burrito/foreman.git', :branch => 'cloudcom'
 
+gem 'rspec'
+
 gem 'json'

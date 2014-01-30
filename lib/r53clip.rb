@@ -173,7 +173,7 @@ class R53clip
 		#return if current_zone_records == @member_zone_records
 
 		member_zone_records.each do |zone_name,records|
-			zone = AWS::Route53.new.hosted_zones.enum.find{|zone| zone.name == zone_name}
+			zone = AWS::Route53.new.hosted_zones.find{|zone| zone.name == zone_name}
 			batch = AWS::Route53::ChangeBatch.new(zone.id)
 			records.each do |zone_record_name,zone_record_data|
 				rrset = zone.rrsets[zone_record_name,'A']

@@ -1,0 +1,253 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  # All Vagrant configuration is done here. The most common configuration
+  # options are documented and commented below. For a complete reference,
+  # please see the online documentation at vagrantup.com.
+
+  config.vm.provider :virtualbox do |vb|
+    vb.customize ['modifyvm', :id, '--natdnshostresolver1', 'on']
+  end
+
+  # Every Vagrant virtual environment requires a box to build off of.
+  3.times do |i|
+    hostname = "box#{i+1}"
+    config.vm.define hostname do |subconfig|
+      subconfig.vm.box = 'precise64'
+      subconfig.vm.hostname = hostname
+      subconfig.vm.box_url = 'http://files.vagrantup.com/precise64.box'
+      subconfig.vm.network "private_network", ip: "172.16.10.#{100+i+1}", virtualbox__intnet: "true"
+    end
+  end
+
+  # The url from where the 'config.vm.box' box will be fetched if it
+  # doesn't already exist on the user's system.
+  # config.vm.box_url = 'http://files.vagrantup.com/precise64.box'
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # config.vm.network :forwarded_port, guest: 80, host: 8080
+
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network :private_network, ip: "192.168.33.10"
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network :public_network
+
+  # If true, then any SSH connections made will enable agent forwarding.
+  # Default value: false
+  # config.ssh.forward_agent = true
+
+  # Share an additional folder to the guest VM. The first argument is
+  # the path on the host to the actual folder. The second argument is
+  # the path on the guest to mount the folder. And the optional third
+  # argument is a set of non-required options.
+  #config.vm.synced_folder "<%= File.expand_path('../../../', __FILE__) %>", "/vagrant"
+
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  # config.vm.provider :virtualbox do |vb|
+  #   # Don't boot with headless mode
+  #   vb.gui = true
+  #
+  #   # Use VBoxManage to customize the VM. For example to change memory:
+  #   vb.customize ["modifyvm", :id, "--memory", "1024"]
+  # end
+  #
+  # View the documentation for the provider you're using for more
+  # information on available options.
+
+  # Enable provisioning with Puppet stand alone.  Puppet manifests
+  # are contained in a directory path relative to this Vagrantfile.
+  # You will need to create the manifests directory and a manifest in
+  # the file base.pp in the manifests_path directory.
+  #
+  # An example Puppet manifest to provision the message of the day:
+  #
+  # # group { "puppet":
+  # #   ensure => "present",
+  # # }
+  # #
+  # # File { owner => 0, group => 0, mode => 0644 }
+  # #
+  # # file { '/etc/motd':
+  # #   content => "Welcome to your Vagrant-built virtual machine!
+  # #               Managed by Puppet.\n"
+  # # }
+  #
+  # config.vm.provision :puppet do |puppet|
+  #   puppet.manifests_path = "manifests"
+  #   puppet.manifest_file  = "site.pp"
+  # end
+
+  # Enable provisioning with chef solo, specifying a cookbooks path, roles
+  # path, and data_bags path (all relative to this Vagrantfile), and adding
+  # some recipes and/or roles.
+  #
+  # config.vm.provision :chef_solo do |chef|
+  #   chef.cookbooks_path = "../my-recipes/cookbooks"
+  #   chef.roles_path = "../my-recipes/roles"
+  #   chef.data_bags_path = "../my-recipes/data_bags"
+  #   chef.add_recipe "mysql"
+  #   chef.add_role "web"
+  #
+  #   # You may also specify custom JSON attributes:
+  #   chef.json = { :mysql_password => "foo" }
+  # end
+
+  # Enable provisioning with chef server, specifying the chef server URL,
+  # and the path to the validation key (relative to this Vagrantfile).
+  #
+  # The Opscode Platform uses HTTPS. Substitute your organization for
+  # ORGNAME in the URL and validation key.
+  #
+  # If you have your own Chef Server, use the appropriate URL, which may be
+  # HTTP instead of HTTPS depending on your configuration. Also change the
+  # validation key to validation.pem.
+  #
+  # config.vm.provision :chef_client do |chef|
+  #   chef.chef_server_url = "https://api.opscode.com/organizations/ORGNAME"
+  #   chef.validation_key_path = "ORGNAME-validator.pem"
+  # end
+  #
+  # If you're using the Opscode platform, your validator client is
+  # ORGNAME-validator, replacing ORGNAME with your organization name.
+  #
+  # If you have your own Chef Server, the default validation client name is
+  # chef-validator, unless you changed the configuration.
+  #
+  #   chef.validation_client_name = "ORGNAME-validator"
+  config.vm.provision 'shell', inline: <<'EOI1'
+if ! test -e /etc/apt/sources.list.d/cloud.list; then
+  echo 'deb [trusted=yes] https://s3.amazonaws.com/cloudcom-packages/ubuntu precise/' > /etc/apt/sources.list.d/cloud.list
+  apt-get update
+fi
+
+#apt-get -y install python-software-properties
+#apt-add-repository -y ppa:brightbox/ruby-ng
+#apt-get update
+apt-get -y install ruby2.0 ruby2.0-dev ruby-switch git build-essential
+ruby-switch --set ruby2.0
+gem install bundler
+
+cat > /etc/gemrc <<'EOI2'
+---
+gem: --no-rdoc --no-ri
+EOI2
+
+#ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts
+#ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''
+
+cat > /install <<'EOI2'
+#!/bin/bash
+
+pushd /vagrant >/dev/null
+filters=()
+while read gitignore; do
+  prefix="${gitignore%/*}"
+  prefix="${prefix#.}"
+  while read line; do
+    [[ "$line" == "#"* ]] && continue
+    [[ "$line" =~ (^\s*$) ]] && continue
+    line="${line#/}"
+    filters+=( "--filter=- $prefix/$line" )
+  done < "$gitignore"
+done < <(find . -name .gitignore)
+popd
+
+rsync -Haxv --delete /vagrant/. /app --filter 'hide .git*' "${filters[@]}" --filter='- /.bundle/' --filter='- /vendor/' --filter='P /bin/*'
+pushd /app >/dev/null
+sed -i -r -e 's#git@([^:]+):#https://\1/#' Gemfile
+sed -i -r -e 's#git@([^:]+):#https://\1/#' Gemfile.lock
+bundle clean
+bundle check >/dev/null 2>&1 || bundle install --deployment --binstubs
+popd >/dev/null
+EOI2
+chmod a+x /install
+
+/install
+
+
+#############################
+
+sed -i -r -e "/127\.\S+ $(hostname)\>/d" /etc/hosts
+echo '172.16.10.101 box1' >> /etc/hosts
+echo '172.16.10.102 box2' >> /etc/hosts
+echo '172.16.10.103 box3' >> /etc/hosts
+
+apt-get -y install corosync libcorosync-common4 libcorosync-common-dev libcpg-dev libquorum-dev libvotequorum-dev libcmap-dev
+#ln -s libquorum.so.5 /usr/lib/libquorum.so
+cat > /etc/corosync/corosync.conf <<'EOI2'
+totem {
+  version: 2
+  token: 2000
+  token_retransmits_before_loss_const: 10
+  vsftype: none
+  clear_node_high_bit: yes
+  secauth: off
+  transport: udpu
+}
+
+logging {
+  fileline: off
+  syslog_facility: local2
+  syslog_priority: debug
+}
+
+quorum {
+  provider: corosync_votequorum
+  allow_downscale: 1
+}
+
+nodelist {
+  node {
+    ring0_addr: box1
+  }
+  node {
+    ring0_addr: box2
+  }
+  node {
+    ring0_addr: box3
+  }
+}
+EOI2
+
+cat > /etc/init/corosync.conf <<'EOI2'
+description "Corosync clustering service"
+
+expect fork
+
+start on network-services
+stop on stopping network-services
+
+exec /usr/sbin/corosync
+
+post-start script
+  timeout 10 sh <<'EOI' || { stop; exit 1 }
+    while ! corosync-cfgtool -s >/dev/null 2>&1; do sleep 0.5; done
+EOI
+end script
+
+respawn
+respawn limit 5 60
+
+# vim: set ft=upstart ts=2 sw=2 tw=0 :
+EOI2
+
+test -e /etc/init.d/corosync && rm /etc/init.d/corosync
+
+initctl start corosync
+
+:
+EOI1
+end
