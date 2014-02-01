@@ -32,7 +32,7 @@ class R53clip
 	end
 
 	def start
-		puts "START"
+		puts "Starting"
 		@member_records = {}
 
 		@cc = CorosyncCommander.new
@@ -50,7 +50,7 @@ class R53clip
 		end
 
 		send_records
-		puts "START: Complete"
+		puts "Starting: Complete"
 	end
 
 	def stop(wait_ttl_expire = false)
@@ -67,7 +67,7 @@ class R53clip
 				ttl = record['ttl'] || 30
 				ttl_max = ttl if ttl > ttl_max
 			end
-			puts "Waiting for records to expire (#{ttl_max} seconds)"
+			puts "Stopping: Waiting for records to expire (#{ttl_max} seconds)"
 			sleep ttl_max
 		end
 	end
@@ -133,11 +133,11 @@ class R53clip
 	def cc_confchg(current, left, joined)
 		changes = false
 		
-		left.each do |node|
+		left.each do |member|
 			# instead of deleting the record entirely, we delete the values so that we can make sure cc_sync knows it should clear the record
-			next unless @member_records[node.to_s]
+			next unless @member_records[member.to_s]
 			changes = true
-			@member_records[node.to_s].each do |record|
+			@member_records[member.to_s].each do |record|
 				record['value'] = nil
 			end
 		end
@@ -169,7 +169,7 @@ class R53clip
 	end
 
 	def cc_sync(sender)
-		return if !@cc.leader?
+		return if !@cc.leader? || !@cc.quorate?
 		#return if current_zone_records == @member_zone_records
 
 		member_zone_records.each do |zone_name,records|
@@ -187,12 +187,12 @@ class R53clip
 
 				batch << AWS::Route53::CreateRequest.new(zone_record_name, 'A', :ttl => (zone_record_data['ttl'] || 30).to_i, :resource_records => values.map{|v| {:value => v}}) if values.size > 0
 
-				puts "SYNC: Setting #{zone_record_name} #{values.inspect}"
+				puts "Sync: Setting #{zone_record_name} #{values.inspect}"
 			end
 			if batch.size > 0 then
 				change = batch.call
 				$stdout.sync = true
-				$stdout.write "SYNC: Waiting for change to complete (#{change.id}) "
+				$stdout.write "Sync: Waiting for change to complete (#{change.id}) "
 				while change.status == 'PENDING' do
 					$stdout.write '.'
 					change = AWS::Route53::ChangeInfo.new(change.id)
@@ -200,7 +200,6 @@ class R53clip
 				end
 				$stdout.write "\n"
 				$stdout.sync = false
-				#puts "STATUS=#{change.status}"
 			end
 		end
 
