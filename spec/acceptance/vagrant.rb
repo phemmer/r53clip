@@ -1,61 +1,64 @@
-class Vagrant
+module Vagrant
+end
+
+class Vagrant::Box
 	require 'shellwords'
 
-	def initialize()
-		#raise ArgumentError, "Vagrantfile not found at #{vgfile_path.inspect}" unless File.exists?(vgfile_path)
+	attr_reader :name
+
+	def initialize(name)
+		@name = name
 	end
 	def start(provision = true)
 		Bundler.with_clean_env do
-			system('vagrant', 'up', '--parallel')
+			system('vagrant', 'up', @name)
 			raise ArgumentError, "Failed to start vagrant instances" if $?.exitstatus > 0
 			if provision == true then
-				system('vagrant', 'provision')
+				system('vagrant', 'provision', @name)
 				raise ArgumentError, "Failed to provision vagrant instances" if $?.exitstatus > 0
 			elsif provision == :fast then
-				execute_all('sudo /install')
+				execute('sudo /install')
 			end
 		end
 	end
-	def stop
+	def up
+		start(:fast)
+	end
+	def halt(*opts)
 		Bundler.with_clean_env do
-			system('vagrant', 'halt')
+			args = []
+
+			args << '--force' if opts.include?(:force)
+
+			system('vagrant', 'halt', @name, *args)
 		end
 	end
-	def execute(box, command, *opts)
+	alias_method :stop, :halt
+	def execute(command, *opts)
 		#cmdstr = Shellwords.escape(command)
 		cmdstr = command
 		io = nil
 		Bundler.with_clean_env do
-			io = IO.popen(['vagrant', 'ssh', box, '--', "cd /app; exec 2>&1 #{cmdstr}"])
+			io = IO.popen(['vagrant', 'ssh', @name, '--', "cd /app; exec 2>&1 #{cmdstr}"])
 		end
 		output = []
 		io.each_line do |line|
 			output << line
-			puts "#{box}: " + line unless opts.include?(:silent)
+			puts "#{@name}: " + line unless opts.include?(:silent)
 		end
 		io.close
 		status = $?.exitstatus
 		[status, output]
 	end
-	def execute_all(command, *opts)
-		['box1','box2','box3'].each do |box|
-			status, output = execute(box, command, *opts)
-			raise StandardError, "#{box}: exit=#{status}" if status > 0 and !opts.include?(:ignore)
+	def background(command, *opts)
+		Thread.new do
+			status, output = execute(command, *opts)
 		end
 	end
-	def background_all(command, *opts)
-		['box1','box2','box3'].each do |box|
-			Thread.new do
-				status, output = execute(box, command, *opts)
-				raise StandardError, "#{box}: exit=#{status}" if status > 0 and !opts.include?(:ignore)
-			end
-		end
-	end
-
-	def put_file_content(box, path, content)
+	def put_file_content(path, content)
 		io = nil
 		Bundler.with_clean_env do
-			io = IO.popen(['vagrant', 'ssh', box, '--', "cat > #{Shellwords.escape(path)}"], 'w')
+			io = IO.popen(['vagrant', 'ssh', @name, '--', "cat > #{Shellwords.escape(path)}"], 'w')
 		end
 		io.write(content)
 		io.close
@@ -63,7 +66,56 @@ class Vagrant
 		raise StandardError, "Transfer failed" if status > 0
 		nil
 	end
-	def put_file_content_all(*args)
-		['box1','box2','box3'].each {|box| put_file_content(box, *args)}
+end
+
+module Vagrant
+	BOXES = Hash[['box1','box2','box3'].map {|name| [name, Vagrant::Box.new(name)]}]
+
+	def self.parallel(&block)
+		threads = []
+		BOXES.values.each do |box|
+			threads << Thread.new do
+				block.call(box)
+			end
+		end
+		threads.each {|thread| thread.join}
+	end
+	def self.start_all(provision = true)
+		parallel {|box| box.start(provision)}
+	end
+
+	def self.execute_all(command, *opts)
+		BOXES.values.each do |box|
+			status, output = box.execute(command, *opts)
+			raise StandardError, "#{box.name}: exit=#{status}" if status > 0 and !opts.include?(:ignore)
+		end
+	end
+	def self.background_all(command, *opts)
+		threads = []
+		BOXES.values.each do |box|
+			threads << box.background(command, *opts)
+		end
+	end
+
+	def self.put_file_content_all(*args)
+		BOXES.values.each {|box| box.put_file_content(*args)}
+	end
+
+	extend Enumerable
+	def self.each(&block)
+		BOXES.values.each(&block)
+	end
+	def self.[](index)
+		if index.is_a?(Integer)
+			BOXES.values[index]
+		else
+			BOXES[index]
+		end
+	end
+	def self.last
+		self[-1]
+	end
+	def self.first
+		self[0]
 	end
 end

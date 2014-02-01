@@ -169,8 +169,8 @@ rsync -Haxv --delete /vagrant/. /app --filter 'hide .git*' "${filters[@]}" --fil
 pushd /app >/dev/null
 sed -i -r -e 's#git@([^:]+):#https://\1/#' Gemfile
 sed -i -r -e 's#git@([^:]+):#https://\1/#' Gemfile.lock
-bundle clean
 bundle check >/dev/null 2>&1 || bundle install --deployment --binstubs
+bundle clean
 popd >/dev/null
 EOI2
 chmod a+x /install
@@ -227,8 +227,8 @@ description "Corosync clustering service"
 
 expect fork
 
-start on network-services
-stop on stopping network-services
+start on runlevel [2345]
+stop on runlevel [!2345]
 
 exec /usr/sbin/corosync
 
