@@ -1,13 +1,15 @@
 GIT
   remote: git@github.com:phemmer/ruby-corosync-commander.git
-  revision: e10e6b3ba0bd41c26672da637417de0b43128a05
+  revision: 6bc2db8d19cc628644041f67b839a255eff70900
+  branch: phemmer
   specs:
     corosync-commander (0.0.2)
       corosync (~> 0.0.3)
 
 GIT
   remote: git@github.com:phemmer/ruby-corosync.git
-  revision: 67106786ed3d959f917ba373545e7bb97b68c625
+  revision: 86e5b606809ad8d6d6813cec4dba13bd00689f6a
+  branch: phemmer
   specs:
     corosync (0.0.3)
       ffi (~> 1.9)
