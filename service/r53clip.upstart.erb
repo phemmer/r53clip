@@ -1,6 +1,6 @@
 description "Route53 cluster IP manager"
 
-start on <%= depend_service %>
+start on started <%= depend_service %>
 stop on stopping <%= depend_service %>
 
 env RUBY_THREAD_MACHINE_STACK_SIZE=1572864
