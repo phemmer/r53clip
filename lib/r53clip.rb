@@ -53,6 +53,17 @@ class R53clip
 		puts "Starting: Complete"
 	end
 
+	def ttl_max
+		ttl_max = 0
+
+		records.each do |record|
+			ttl = record['ttl'] || 30
+			ttl_max = ttl if ttl > ttl_max
+		end
+
+		ttl_max
+	end
+
 	def stop(wait_ttl_expire = false)
 		# similar to send_records except we clear the values
 		puts "Stopping"
@@ -62,11 +73,7 @@ class R53clip
 		@cc.execute([], 'sync').wait
 		@cc.stop
 		if wait_ttl_expire then
-			ttl_max = 0
-			records.each do |record|
-				ttl = record['ttl'] || 30
-				ttl_max = ttl if ttl > ttl_max
-			end
+			ttl_max = self.ttl_max
 			puts "Stopping: Waiting for records to expire (#{ttl_max} seconds)"
 			sleep ttl_max
 		end
