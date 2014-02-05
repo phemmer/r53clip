@@ -14,12 +14,18 @@ class Vagrant::Box
 			system('vagrant', 'up', @name)
 			raise ArgumentError, "Failed to start vagrant instances" if $?.exitstatus > 0
 			if provision == true then
-				system('vagrant', 'provision', @name)
-				raise ArgumentError, "Failed to provision vagrant instances" if $?.exitstatus > 0
+				self.provision
 			elsif provision == :fast then
-				execute('sudo /install')
+				self.install
 			end
 		end
+	end
+	def provision(fast = false)
+		system('vagrant', 'provision', @name)
+		raise ArgumentError, "Failed to provision vagrant instances" if $?.exitstatus > 0
+	end
+	def install
+		execute('sudo /install')
 	end
 	def up
 		start(:fast)
@@ -81,7 +87,10 @@ module Vagrant
 		threads.each {|thread| thread.join}
 	end
 	def self.start_all(provision = true)
-		parallel {|box| box.start(provision)}
+		Bundler.with_clean_env do
+			system('vagrant','up','--parallel')
+		end
+		parallel {|box| box.install()}
 	end
 
 	def self.execute_all(command, *opts)

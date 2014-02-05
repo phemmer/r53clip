@@ -181,8 +181,11 @@ chmod a+x /install
 #############################
 
 sed -i -r -e "/127\.\S+ $(hostname)\>/d" /etc/hosts
+sed -i -e '/\<box1\>/d' /etc/hosts
 echo '172.16.10.101 box1' >> /etc/hosts
+sed -i -e '/\<box2\>/d' /etc/hosts
 echo '172.16.10.102 box2' >> /etc/hosts
+sed -i -e '/\<box3\>/d' /etc/hosts
 echo '172.16.10.103 box3' >> /etc/hosts
 
 apt-get -y install corosync libcorosync-common4 libcorosync-common-dev libcpg-dev libquorum-dev libvotequorum-dev libcmap-dev
