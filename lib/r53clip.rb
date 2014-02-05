@@ -81,7 +81,7 @@ class R53clip
 			record['name'] += '.' unless record['name'][-1] == '.'
 			record['zone'] = record_spec['zone'] || record['name'].sub(/^[^.]+\./, '')
 			record['zone'] += '.' unless record['zone'][-1] == '.'
-			record['ttl'] = record_spec['ttl'] if record_spec['ttl']
+			record['ttl'] = record_spec['ttl'].to_i if record_spec['ttl']
 			record['stopped'] = record_spec['stopped'] if record_spec['stopped']
 			record['value'] = get_ip(record_spec['source'])
 		end
