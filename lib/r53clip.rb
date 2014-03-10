@@ -45,7 +45,7 @@ class R53clip
 		@cc.join('r53clip')
 
 		exe = @cc.execute([], 'get records')
-		exe.to_enum.each do |response, sender|
+		exe.to_enum.each do |sender, response|
 			@member_records[sender.to_s] = response
 		end
 

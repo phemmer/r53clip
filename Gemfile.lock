@@ -1,20 +1,4 @@
 GIT
-  remote: git@github.com:phemmer/ruby-corosync-commander.git
-  revision: 6bc2db8d19cc628644041f67b839a255eff70900
-  branch: phemmer
-  specs:
-    corosync-commander (0.0.2)
-      corosync (~> 0.0.3)
-
-GIT
-  remote: git@github.com:phemmer/ruby-corosync.git
-  revision: 86e5b606809ad8d6d6813cec4dba13bd00689f6a
-  branch: phemmer
-  specs:
-    corosync (0.0.3)
-      ffi (~> 1.9)
-
-GIT
   remote: git@github.com:phemmer/ruby-syslogio.git
   revision: 2e8896c5b7fd3c41bb459d0d2c7374e2587dcb57
   specs:
@@ -36,6 +20,10 @@ GEM
       json (~> 1.4)
       nokogiri (>= 1.4.4)
       uuidtools (~> 2.1)
+    corosync (0.1.0.0)
+      ffi (~> 1.9)
+    corosync-commander (0.1.0.0)
+      corosync (~> 0.1.0)
     diff-lcs (1.2.5)
     dotenv (0.9.0)
     ffi (1.9.3)
@@ -60,8 +48,7 @@ PLATFORMS
 
 DEPENDENCIES
   aws-sdk
-  corosync!
-  corosync-commander!
+  corosync-commander (~> 0.1.0)
   foreman!
   json
   rake
