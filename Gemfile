@@ -1,6 +1,8 @@
 source "https://rubygems.org"
 
-gem 'corosync-commander', '~>0.1.0'
+gem 'corosync', :git => 'git@github.com:phemmer/ruby-corosync.git'
+gem 'corosync-commander', :git => 'git@github.com:phemmer/ruby-corosync-commander.git'
+
 gem 'aws-sdk'
 gem 'syslogio', :git => 'git@github.com:phemmer/ruby-syslogio.git'
 
