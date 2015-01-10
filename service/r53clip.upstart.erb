@@ -7,6 +7,11 @@ env RUBY_THREAD_MACHINE_STACK_SIZE=1572864
 
 pre-start script
 	mkdir -p '<%= run_dir %>'
+
+	while ! corosync-quorumtool | grep -q 'Quorate: *Yes'; do
+		echo waiting for cluster to become quorate
+		sleep 5
+	done
 end script
 
 chdir <%= run_dir %>
